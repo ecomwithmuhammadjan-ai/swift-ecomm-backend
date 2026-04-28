@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  user:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   orderNumber: { type: String, unique: true },
   items: [{
     product:  { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    productId: Number,
     name:     String,
     price:    Number,
     quantity: Number,
@@ -14,8 +15,16 @@ const orderSchema = new mongoose.Schema({
   shipping:   { type: Number, default: 0 },
   tax:        { type: Number, default: 0 },
   total:      { type: Number, required: true },
-  status:     { type: String, enum: ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'pending' },
-  paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending' },
+  status: { 
+    type: String, 
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], 
+    default: 'pending' 
+  },
+  paymentStatus: { 
+    type: String, 
+    enum: ['pending', 'paid', 'failed', 'refunded'], 
+    default: 'pending' 
+  },
   shippingAddress: {
     name: String,
     street: String,
@@ -26,9 +35,20 @@ const orderSchema = new mongoose.Schema({
   },
   customerEmail: String,
   customerPhone: String,
-  notes: String,
+  notes: String,                    // Customer notes
+  internalNotes: String,            // Admin-only notes
   trackingNumber: String,
-  createdAt: { type: Date, default: Date.now }
+  cancelReason: String,             // Reason for cancellation
+  statusHistory: [{                 // Track all status changes
+    status: String,
+    changedAt: { type: Date, default: Date.now },
+    note: String
+  }],
+  createdAt: { type: Date, default: Date.now },
+  confirmedAt: Date,
+  shippedAt: Date,
+  deliveredAt: Date,
+  cancelledAt: Date
 });
 
 // Generate order number before saving
