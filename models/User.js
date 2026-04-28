@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   companyName: { type: String, trim: true },
   role:        { type: String, enum: ['customer', 'client', 'admin'], default: 'customer' },
   emailVerified: { type: Boolean, default: false },
+  lastLogin:   { type: Date },
   createdAt:   { type: Date, default: Date.now }
 });
 
