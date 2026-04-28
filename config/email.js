@@ -6,15 +6,18 @@ const isEmailConfigured = () => {
 };
 
 // Create email transporter
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
+const transporter = nodemailer.createTransport({
+  host: 'smtp.ionos.com',
+  port: 587,
+  secure: false,                  // false = use STARTTLS
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
 
 /**
  * Send email function - gracefully skips if email not configured
