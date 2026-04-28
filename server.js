@@ -1,6 +1,5 @@
 /* ============================================================
-   SWIFT E-COMM BACKEND - Main Server File
-   This is the entry point for the backend API
+   SWIFT E-COMM BACKEND - Main Server File (v2 - With Admin)
 ============================================================ */
 
 require('dotenv').config();
@@ -30,23 +29,20 @@ connectDB();
 /* ============================================================
    MIDDLEWARE
 ============================================================ */
-app.use(helmet());           // Security headers
-app.use(morgan('dev'));      // Logging
-app.use(express.json());     // Parse JSON body
-
-// CORS - Allow ALL origins for development (we'll restrict for production later)
+app.use(helmet());
+app.use(morgan('dev'));
+app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 
-// Rate limiting - Prevent abuse
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,                  // Max 100 requests per window per IP
+  windowMs: 15 * 60 * 1000,
+  max: 200,
   message: { message: 'Too many requests. Try again later.' }
 });
 app.use('/api/', limiter);
 
 /* ============================================================
-   ROUTES
+   PUBLIC ROUTES
 ============================================================ */
 app.use('/api/contact',     require('./routes/contact'));
 app.use('/api/auth',        require('./routes/auth'));
@@ -55,29 +51,47 @@ app.use('/api/products',    require('./routes/products'));
 app.use('/api/orders',      require('./routes/orders'));
 app.use('/api/newsletter',  require('./routes/newsletter'));
 
-// Health check endpoint
+/* ============================================================
+   ADMIN ROUTES (all require admin authentication)
+============================================================ */
+app.use('/api/admin',           require('./routes/adminAuth'));
+app.use('/api/admin/dashboard', require('./routes/dashboard'));
+app.use('/api/admin/orders',    require('./routes/adminOrders'));
+app.use('/api/admin/products',  require('./routes/adminProducts'));
+app.use('/api/admin',           require('./routes/adminContacts'));
+
+/* ============================================================
+   HEALTH CHECK
+============================================================ */
 app.get('/', (req, res) => {
   res.json({ 
     status: '✅ Swift E-Comm API is running',
-    version: '1.0.0',
-    endpoints: [
-      'POST /api/contact - Contact form',
-      'POST /api/auth/register - Sign up',
-      'POST /api/auth/login - Sign in',
-      'POST /api/quotes - Request quote',
-      'GET  /api/products - Get products',
-      'POST /api/orders - Create order',
-      'POST /api/newsletter - Subscribe'
-    ]
+    version: '2.0.0',
+    features: ['Public API', 'Admin Portal', 'Order Management', 'Product Management'],
+    endpoints: {
+      public: [
+        'POST /api/contact',
+        'POST /api/orders',
+        'GET  /api/products',
+        'POST /api/newsletter'
+      ],
+      admin: [
+        'POST /api/admin/login',
+        'GET  /api/admin/dashboard',
+        'GET  /api/admin/orders',
+        'PATCH /api/admin/orders/:id/status',
+        'GET  /api/admin/products',
+        'POST /api/admin/products',
+        'PUT  /api/admin/products/:id'
+      ]
+    }
   });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
   res.status(500).json({ 
@@ -86,15 +100,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* ============================================================
-   START SERVER
-============================================================ */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log('');
   console.log('═══════════════════════════════════════════════');
-  console.log(`🚀 Swift E-Comm API running on port ${PORT}`);
+  console.log(`🚀 Swift E-Comm API v2.0 running on port ${PORT}`);
   console.log(`📍 http://localhost:${PORT}`);
+  console.log(`🔐 Admin: http://localhost:${PORT}/api/admin/login`);
   console.log('═══════════════════════════════════════════════');
-  console.log('');
 });
